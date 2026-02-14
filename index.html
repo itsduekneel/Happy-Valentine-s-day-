@@ -114,7 +114,7 @@ const palette = [COLORS.purple, COLORS.yellow];
 for (let i = 0; i < 250; i++) {  // reduced from 28 → 20  
     const spread = 250;  
     const x = CENTER_X + (Math.random() - 0.5) * spread;  
-    const height = 130 + Math.random() * 20;  
+    const height = 130 + Math.random() * 50;  
     const color = palette[Math.floor(Math.random() * palette.length)];  
     tulips.push(new Tulip(x, height, color));  
 }
