@@ -1,0 +1,241 @@
+<!DOCTYPE html>  <html>  
+<head>  
+<meta charset="UTF-8">  
+  <style>  
+    body {  
+        margin: 0;  
+        background: radial-gradient(circle, #2b0a1a 0%, #05050a 100%);  
+        display: flex;  
+        justify-content: center;  
+        align-items: center;  
+        height: 100vh;  
+        overflow: hidden;  
+    }  
+    canvas {   
+        display: block;   
+        filter: drop-shadow(0 0 20px rgba(230, 166, 184, 0.3));   
+    }  
+</style>  
+</head>  
+<body>  
+<canvas id="canvas"></canvas>  
+<script>  
+const canvas = document.getElementById("canvas");  
+const ctx = canvas.getContext("2d");  canvas.width = 500;
+canvas.height = 1000;
+
+const W = canvas.width;
+const H = canvas.height;
+
+const BASE_Y = 800;
+const CENTER_X = W / 2;
+
+let lastTime = 0;
+
+const COLORS = {
+purple: { main: "#b388ff", light: "#ede7f6", dark: "#7c4dff" },
+pink: { main: "#ff80ab", light: "#fce4ec", dark: "#f50057" },
+yellow: { main: "#ffd740", light: "#fff9c4", dark: "#ffab00" },
+stem: "#2d5a27",
+wrap: "#d81b60",
+wrapLight: "#f48fb1",
+ribbon: "#ffeb3b"
+};
+
+class Tulip {
+constructor(x, height, color) {
+this.x = x;
+this.height = height;
+this.currHeight = 0;
+this.bloom = 0;
+this.color = color;
+this.offset = Math.random() * Math.PI * 2;
+}
+
+update(delta) {  
+    if (this.currHeight < this.height) {  
+        this.currHeight += 500 * delta;  
+    } else if (this.bloom < 1) {  
+        this.bloom += 1 * delta;  
+    }  
+}  
+
+draw(time) {  
+    const sway = Math.sin(time * 0.002 + this.offset) * 4;  
+    const topX = this.x + sway;  
+    const topY = BASE_Y - this.currHeight;  
+
+    // Stem  
+    ctx.beginPath();  
+    ctx.moveTo(this.x, BASE_Y);  
+    ctx.quadraticCurveTo(this.x + sway/2, BASE_Y - this.currHeight/2, topX, topY);  
+    ctx.strokeStyle = COLORS.stem;  
+    ctx.lineWidth = 3;  
+    ctx.stroke();  
+
+    if (this.bloom > 0) {  
+ctx.save();  
+ctx.translate(topX, topY);  
+ctx.scale(this.bloom, this.bloom);  
+
+const drawPetal = (angle, scaleX, scaleY, fill) => {  
+    ctx.save();  
+    ctx.rotate(angle);  
+    ctx.scale(scaleX, scaleY);  
+    ctx.beginPath();  
+    ctx.moveTo(0, 0);  
+    ctx.bezierCurveTo(-10, -10, -15, -40, 0, -50);  // left curve  
+    ctx.bezierCurveTo(15, -40, 10, -10, 0, 0);       // right curve  
+    ctx.fillStyle = fill;  
+    ctx.fill();  
+    ctx.restore();  
+};  
+      const petals = [  
+    {angle: 0, color: this.color.main},  
+    {angle: Math.PI / 6, color: this.color.main},  
+    {angle: -Math.PI / 6, color: this.color.main},  
+    {angle: Math.PI / 3, color: this.color.dark},  
+    {angle: -Math.PI / 3, color: this.color.dark},  
+    {angle: 0, color: this.color.light, scaleX: 0.9, scaleY: 1} // top inner petal  
+];  
+
+        petals.forEach(p => drawPetal(p.angle, p.scaleX || 1, p.scaleY || 1, p.color));  
+ctx.restore();  
+    }  
+}
+
+}
+
+const tulips = [];
+
+function init() {
+const palette = [COLORS.purple, COLORS.yellow];
+
+for (let i = 0; i < 250; i++) {  // reduced from 28 → 20  
+    const spread = 250;  
+    const x = CENTER_X + (Math.random() - 0.5) * spread;  
+    const height = 130 + Math.random() * 20;  
+    const color = palette[Math.floor(Math.random() * palette.length)];  
+    tulips.push(new Tulip(x, height, color));  
+}
+
+}
+
+function drawWrap() {
+// BACK OUTER WRAP (Soft pastel pink)
+ctx.fillStyle = "#f8bbd0";
+ctx.beginPath();
+ctx.moveTo(CENTER_X - 220, BASE_Y - 350);
+ctx.quadraticCurveTo(CENTER_X, BASE_Y - 450, CENTER_X + 220, BASE_Y - 350);
+ctx.lineTo(CENTER_X + 100, BASE_Y + 60);
+ctx.quadraticCurveTo(CENTER_X, BASE_Y + 90, CENTER_X - 100, BASE_Y + 60);
+ctx.closePath();
+ctx.fill();
+
+// SIDE FOLDS  
+ctx.fillStyle = "#f48fb1";  
+ctx.beginPath();  
+ctx.moveTo(CENTER_X - 200, BASE_Y - 330);  
+ctx.quadraticCurveTo(CENTER_X - 120, BASE_Y - 380, CENTER_X - 80, BASE_Y - 320);  
+ctx.lineTo(CENTER_X - 100, BASE_Y + 60);  
+ctx.closePath();  
+ctx.fill();  
+
+ctx.beginPath();  
+ctx.moveTo(CENTER_X + 200, BASE_Y - 330);  
+ctx.quadraticCurveTo(CENTER_X + 120, BASE_Y - 380, CENTER_X + 80, BASE_Y - 320);  
+ctx.lineTo(CENTER_X + 100, BASE_Y + 60);  
+ctx.closePath();  
+ctx.fill();  
+
+// INNER WHITE TISSUE  
+ctx.fillStyle = "#ffffff";  
+ctx.beginPath();  
+ctx.moveTo(CENTER_X - 130, BASE_Y - 260);  
+ctx.quadraticCurveTo(CENTER_X, BASE_Y - 310, CENTER_X + 130, BASE_Y - 260);  
+ctx.lineTo(CENTER_X + 60, BASE_Y + 40);  
+ctx.quadraticCurveTo(CENTER_X, BASE_Y + 60, CENTER_X - 60, BASE_Y + 40);  
+ctx.closePath();  
+ctx.fill();
+
+}
+
+function drawFrontWrap() {
+
+    // FRONT MAIN COVER (binaba ng konti)
+    ctx.fillStyle = "#f8bbd0";
+    ctx.beginPath();
+    ctx.moveTo(CENTER_X - 180, BASE_Y - 120);
+    ctx.quadraticCurveTo(CENTER_X, BASE_Y - 160, CENTER_X + 180, BASE_Y - 120);
+    ctx.lineTo(CENTER_X + 110, BASE_Y + 170);
+    ctx.quadraticCurveTo(CENTER_X, BASE_Y + 210, CENTER_X - 110, BASE_Y + 170);
+    ctx.closePath();
+    ctx.fill();
+
+    // INNER SHADE
+    ctx.fillStyle = "#f48fb1";
+    ctx.beginPath();
+    ctx.moveTo(CENTER_X - 150, BASE_Y - 95);
+    ctx.quadraticCurveTo(CENTER_X, BASE_Y - 130, CENTER_X + 150, BASE_Y - 95);
+    ctx.lineTo(CENTER_X + 80, BASE_Y + 160);
+    ctx.quadraticCurveTo(CENTER_X, BASE_Y + 185, CENTER_X - 80, BASE_Y + 160);
+    ctx.closePath();
+    ctx.fill();
+
+    // RIBBON KNOT
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(CENTER_X, BASE_Y + 40, 20, 0, Math.PI * 2);
+    ctx.fill();
+
+    // LEFT BOW
+    ctx.beginPath();
+    ctx.ellipse(CENTER_X - 45, BASE_Y + 40, 45, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // RIGHT BOW
+    ctx.beginPath();
+    ctx.ellipse(CENTER_X + 45, BASE_Y + 40, 45, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // LEFT TAIL
+    ctx.beginPath();
+    ctx.moveTo(CENTER_X - 20, BASE_Y + 60);
+    ctx.lineTo(CENTER_X - 60, BASE_Y + 210);
+    ctx.lineTo(CENTER_X - 5, BASE_Y + 175);
+    ctx.closePath();
+    ctx.fill();
+
+    // RIGHT TAIL
+    ctx.beginPath();
+    ctx.moveTo(CENTER_X + 20, BASE_Y + 60);
+    ctx.lineTo(CENTER_X + 60, BASE_Y + 210);
+    ctx.lineTo(CENTER_X + 5, BASE_Y + 175);
+    ctx.closePath();
+    ctx.fill();
+}
+function animate(timestamp) {
+const delta = (timestamp - lastTime) / 2000;
+lastTime = timestamp;
+
+ctx.clearRect(0, 0, W, H);  
+
+drawWrap();  
+
+tulips.forEach(t => {  
+    t.update(delta);  
+    t.draw(timestamp);  
+});  
+
+drawFrontWrap();  
+
+requestAnimationFrame(animate);
+
+}
+
+init();
+requestAnimationFrame(animate);
+</script>
+
+</body>  
+</html>  
